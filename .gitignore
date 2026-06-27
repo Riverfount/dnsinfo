@@ -1,0 +1,18 @@
+# Binário compilado (go build gera com o nome do módulo/pasta: "dnsinfo")
+/dnsinfo
+
+# Variantes de saída de build, caso você teste com outros nomes
+*.exe
+*.out
+
+# Segredos — nunca versione seu token
+.env
+
+# Cobertura de testes, se um dia você rodar `go test -coverprofile`
+*.coverprofile
+coverage.out
+
+# Lixo de editor / sistema operacional
+.DS_Store
+.idea/
+.vscode/
