@@ -129,10 +129,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	currency, ok := currencyByCountry[info.Country]
-	if !ok {
-		currency = "N/A"
-	}
+	currency := currencyForCountry(info.Country)
 
 	fmt.Printf("IP: %s\n", info.IP)
 	fmt.Printf("Organization: %s\n", info.Org)
@@ -144,6 +141,14 @@ func main() {
 	fmt.Printf("Currency: %s\n", currency)
 	fmt.Printf("Location: %s\n", info.Loc)
 	fmt.Printf("Timezone: %s\n", info.Timezone)
+}
+
+func currencyForCountry(country string) string {
+	currency, ok := currencyByCountry[country]
+	if !ok {
+		currency = "N/A"
+	}
+	return currency
 }
 
 func fetchIPInfo(ctx context.Context, ip4 net.IP) (IPInfo, error) {
