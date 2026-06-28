@@ -47,7 +47,6 @@ func firstIPv4(ipAddrs []net.IPAddr) (net.IP, error) {
 
 type IPInfo struct {
 	IP       string `json:"ip"`
-	Hostname string `json:"hostname"`
 	City     string `json:"city"`
 	Region   string `json:"region"`
 	Country  string `json:"country"`
@@ -114,7 +113,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var resolver net.Resolver
+	resolver := &net.Resolver{}
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
 	ipAddrs, err := resolver.LookupIPAddr(ctx, host)
@@ -129,11 +128,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	hostnames := reverseHostname(ctx, resolver, ip4)
 
 	currency := currencyForCountry(info.Country)
 
 	fmt.Printf("IP: %s\n", info.IP)
-	fmt.Printf("Hostname: %s\n", info.Hostname)
+	fmt.Printf("Hostnames: %s\n", strings.Join(hostnames, ", "))
 	fmt.Printf("Organization: %s\n", info.Org)
 	fmt.Printf("Anycast: %t\n", info.Anycast)
 	fmt.Printf("City: %s\n", info.City)
@@ -155,7 +155,6 @@ func currencyForCountry(country string) string {
 
 func fetchIPInfo(ctx context.Context, ip4 net.IP) (IPInfo, error) {
 	urlAddr := fmt.Sprintf(ipInfoBaseURL, ip4.To4().String())
-
 	client := &http.Client{Timeout: requestTimeout}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlAddr, nil)
 	if err != nil {
@@ -174,4 +173,15 @@ func fetchIPInfo(ctx context.Context, ip4 net.IP) (IPInfo, error) {
 		return IPInfo{}, err
 	}
 	return info, nil
+}
+
+func reverseHostname(ctx context.Context, resolver *net.Resolver, ip net.IP) []string {
+	hostnames, err := resolver.LookupAddr(ctx, ip.To4().String())
+	if err != nil {
+		return nil
+	}
+	for i := range hostnames {
+		hostnames[i] = strings.TrimSuffix(hostnames[i], ".")
+	}
+	return hostnames
 }
