@@ -47,6 +47,7 @@ func firstIPv4(ipAddrs []net.IPAddr) (net.IP, error) {
 
 type IPInfo struct {
 	IP       string `json:"ip"`
+	Hostname string `json:"hostname"`
 	City     string `json:"city"`
 	Region   string `json:"region"`
 	Country  string `json:"country"`
@@ -132,6 +133,7 @@ func main() {
 	currency := currencyForCountry(info.Country)
 
 	fmt.Printf("IP: %s\n", info.IP)
+	fmt.Printf("Hostname: %s\n", info.Hostname)
 	fmt.Printf("Organization: %s\n", info.Org)
 	fmt.Printf("Anycast: %t\n", info.Anycast)
 	fmt.Printf("City: %s\n", info.City)
