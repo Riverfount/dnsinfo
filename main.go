@@ -28,6 +28,20 @@ func normalizeHost(urlRaw string) (string, error) {
 
 }
 
+func firstIPv4(ipAddrs []net.IPAddr) (net.IP, error) {
+	var ip4 net.IP
+	for _, ip := range ipAddrs {
+		if ip.IP.To4() != nil {
+			ip4 = ip.IP
+			break
+		}
+	}
+	if ip4 == nil {
+		return nil, errors.New("no IPv4 address found")
+	}
+	return ip4, nil
+}
+
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Fprintf(os.Stderr, "usage: %s <hostname>\n", os.Args[0])
@@ -46,15 +60,9 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	var ip4 net.IP
-	for _, ip := range ipAddrs {
-		if ip.IP.To4() != nil {
-			ip4 = ip.IP
-			break
-		}
-	}
-	if ip4 == nil {
-		fmt.Fprintln(os.Stderr, "ip4 not found")
+	ip4, err := firstIPv4(ipAddrs)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 	fmt.Println(ip4)
