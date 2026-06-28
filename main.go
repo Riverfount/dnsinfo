@@ -100,6 +100,11 @@ var currencyByCountry = map[string]string{
 	"PH": "PHP",
 }
 
+const (
+	requestTimeout = 5 * time.Second
+	ipInfoBaseURL  = "https://ipinfo.io/%s/json"
+)
+
 func main() {
 	if len(os.Args) < 2 {
 		log.Fatalf("usage: %s <hostname>", os.Args[0])
@@ -109,7 +114,7 @@ func main() {
 		log.Fatal(err)
 	}
 	var resolver net.Resolver
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
 	ipAddrs, err := resolver.LookupIPAddr(ctx, host)
 	if err != nil {
@@ -142,8 +147,9 @@ func main() {
 }
 
 func fetchIPInfo(ctx context.Context, ip4 net.IP) (IPInfo, error) {
-	urlAddr := fmt.Sprintf("https://ipinfo.io/%s/json", ip4.To4().String())
-	client := &http.Client{Timeout: 5 * time.Second}
+	urlAddr := fmt.Sprintf(ipInfoBaseURL, ip4.To4().String())
+
+	client := &http.Client{Timeout: requestTimeout}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlAddr, nil)
 	if err != nil {
 		return IPInfo{}, err
