@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/url"
 	"os"
 	"strings"
+	"time"
 )
 
 func normalizeHost(urlRaw string) (string, error) {
@@ -27,7 +30,7 @@ func normalizeHost(urlRaw string) (string, error) {
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "Need to be informed the hostname!")
+		fmt.Fprintf(os.Stderr, "usage: %s <hostname>\n", os.Args[0])
 		os.Exit(1)
 	}
 	host, err := normalizeHost(os.Args[1])
@@ -35,5 +38,15 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	fmt.Println(host)
+	var resolver net.Resolver
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	ipAddrs, err := resolver.LookupIPAddr(ctx, host)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	for _, ip := range ipAddrs {
+		fmt.Println(ip.IP)
+	}
 }
