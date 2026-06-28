@@ -46,7 +46,16 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+	var ip4 net.IP
 	for _, ip := range ipAddrs {
-		fmt.Println(ip.IP)
+		if ip.IP.To4() != nil {
+			ip4 = ip.IP
+			break
+		}
 	}
+	if ip4 == nil {
+		fmt.Fprintln(os.Stderr, "ip4 not found")
+		os.Exit(1)
+	}
+	fmt.Println(ip4)
 }
