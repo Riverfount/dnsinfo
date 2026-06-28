@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -101,31 +102,26 @@ var currencyByCountry = map[string]string{
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintf(os.Stderr, "usage: %s <hostname>\n", os.Args[0])
-		os.Exit(1)
+		log.Fatalf("usage: %s <hostname>", os.Args[0])
 	}
 	host, err := normalizeHost(os.Args[1])
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 	var resolver net.Resolver
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	ipAddrs, err := resolver.LookupIPAddr(ctx, host)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 	ip4, err := firstIPv4(ipAddrs)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 	info, err := fetchIPInfo(ctx, ip4)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 
 	currency, ok := currencyByCountry[info.Country]
