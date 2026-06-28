@@ -56,6 +56,49 @@ type IPInfo struct {
 	Anycast  bool   `json:"anycast"`
 }
 
+var currencyByCountry = map[string]string{
+	"US": "USD",
+	"BR": "BRL",
+	"GB": "GBP",
+	"CA": "CAD",
+	"AU": "AUD",
+	"NZ": "NZD",
+	"JP": "JPY",
+	"CN": "CNY",
+	"IN": "INR",
+	"MX": "MXN",
+	"AR": "ARS",
+	"CL": "CLP",
+	"CO": "COP",
+	"PE": "PEN",
+	"UY": "UYU",
+	"PY": "PYG",
+	"DE": "EUR",
+	"FR": "EUR",
+	"IT": "EUR",
+	"ES": "EUR",
+	"PT": "EUR",
+	"NL": "EUR",
+	"CH": "CHF",
+	"SE": "SEK",
+	"NO": "NOK",
+	"DK": "DKK",
+	"PL": "PLN",
+	"TR": "TRY",
+	"RU": "RUB",
+	"ZA": "ZAR",
+	"KR": "KRW",
+	"SG": "SGD",
+	"HK": "HKD",
+	"AE": "AED",
+	"SA": "SAR",
+	"IL": "ILS",
+	"TH": "THB",
+	"VN": "VND",
+	"ID": "IDR",
+	"PH": "PHP",
+}
+
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Fprintf(os.Stderr, "usage: %s <hostname>\n", os.Args[0])
@@ -85,6 +128,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	currency, ok := currencyByCountry[info.Country]
+	if !ok {
+		currency = "N/A"
+	}
+
 	fmt.Printf("IP: %s\n", info.IP)
 	fmt.Printf("Organization: %s\n", info.Org)
 	fmt.Printf("Anycast: %t\n", info.Anycast)
@@ -92,6 +140,7 @@ func main() {
 	fmt.Printf("Region: %s\n", info.Region)
 	fmt.Printf("Postal: %s\n", info.Postal)
 	fmt.Printf("Country: %s\n", info.Country)
+	fmt.Printf("Currency: %s\n", currency)
 	fmt.Printf("Location: %s\n", info.Loc)
 	fmt.Printf("Timezone: %s\n", info.Timezone)
 }
