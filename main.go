@@ -79,25 +79,8 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	urlAddr := fmt.Sprintf("https://ipinfo.io/%s/json", ip4.To4().String())
-	client := &http.Client{Timeout: 5 * time.Second}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlAddr, nil)
+	info, err := fetchIPInfo(ctx, ip4)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-	defer func() { _ = resp.Body.Close() }()
-	if resp.StatusCode != http.StatusOK {
-		fmt.Fprintf(os.Stderr, "request error: %s\n", resp.Status)
-		os.Exit(1)
-	}
-	var info IPInfo
-	if err := json.NewDecoder(resp.Body).Decode(&info); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
@@ -111,4 +94,26 @@ func main() {
 	fmt.Printf("Country: %s\n", info.Country)
 	fmt.Printf("Location: %s\n", info.Loc)
 	fmt.Printf("Timezone: %s\n", info.Timezone)
+}
+
+func fetchIPInfo(ctx context.Context, ip4 net.IP) (IPInfo, error) {
+	urlAddr := fmt.Sprintf("https://ipinfo.io/%s/json", ip4.To4().String())
+	client := &http.Client{Timeout: 5 * time.Second}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlAddr, nil)
+	if err != nil {
+		return IPInfo{}, err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return IPInfo{}, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		return IPInfo{}, fmt.Errorf("request failed with status %s", resp.Status)
+	}
+	var info IPInfo
+	if err := json.NewDecoder(resp.Body).Decode(&info); err != nil {
+		return IPInfo{}, err
+	}
+	return info, nil
 }
