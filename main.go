@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -42,6 +42,18 @@ func firstIPv4(ipAddrs []net.IPAddr) (net.IP, error) {
 		return nil, errors.New("no IPv4 address found")
 	}
 	return ip4, nil
+}
+
+type IPInfo struct {
+	IP       string `json:"ip"`
+	City     string `json:"city"`
+	Region   string `json:"region"`
+	Country  string `json:"country"`
+	Loc      string `json:"loc"`
+	Org      string `json:"org"`
+	Postal   string `json:"postal"`
+	Timezone string `json:"timezone"`
+	Anycast  bool   `json:"anycast"`
 }
 
 func main() {
@@ -84,10 +96,12 @@ func main() {
 		fmt.Fprintf(os.Stderr, "request error: %s\n", resp.Status)
 		os.Exit(1)
 	}
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
+	var info IPInfo
+	if err := json.NewDecoder(resp.Body).Decode(&info); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	fmt.Println(string(body))
+
+	fmt.Printf("City: %s\n", info.City)
+	fmt.Printf("Country: %s\n", info.Country)
 }
