@@ -102,6 +102,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	fmt.Printf("IP: %s\n", info.IP)
+	fmt.Printf("Organization: %s\n", info.Org)
+	fmt.Printf("Anycast: %t\n", info.Anycast)
 	fmt.Printf("City: %s\n", info.City)
+	fmt.Printf("Region: %s\n", info.Region)
+	fmt.Printf("Postal: %s\n", info.Postal)
 	fmt.Printf("Country: %s\n", info.Country)
+	fmt.Printf("Location: %s\n", info.Loc)
+	fmt.Printf("Timezone: %s\n", info.Timezone)
 }
