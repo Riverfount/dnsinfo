@@ -3,6 +3,7 @@ package output
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/Riverfount/dnsinfo/internal/geoip"
@@ -14,25 +15,25 @@ type Result struct {
 	Currency  string   `json:"currency"`
 }
 
-func Print(result Result) {
-	fmt.Printf("IP: %s\n", result.IP)
-	fmt.Printf("Hostnames: %s\n", strings.Join(result.Hostnames, ", "))
-	fmt.Printf("Organization: %s\n", result.Org)
-	fmt.Printf("Anycast: %t\n", result.Anycast)
-	fmt.Printf("City: %s\n", result.City)
-	fmt.Printf("Region: %s\n", result.Region)
-	fmt.Printf("Postal: %s\n", result.Postal)
-	fmt.Printf("Country: %s\n", result.Country)
-	fmt.Printf("Currency: %s\n", result.Currency)
-	fmt.Printf("Location: %s\n", result.Loc)
-	fmt.Printf("Timezone: %s\n", result.Timezone)
+func Print(dst io.Writer, result Result) {
+	fmt.Fprintf(dst, "IP: %s\n", result.IP)
+	fmt.Fprintf(dst, "Hostnames: %s\n", strings.Join(result.Hostnames, ", "))
+	fmt.Fprintf(dst, "Organization: %s\n", result.Org)
+	fmt.Fprintf(dst, "Anycast: %t\n", result.Anycast)
+	fmt.Fprintf(dst, "City: %s\n", result.City)
+	fmt.Fprintf(dst, "Region: %s\n", result.Region)
+	fmt.Fprintf(dst, "Postal: %s\n", result.Postal)
+	fmt.Fprintf(dst, "Country: %s\n", result.Country)
+	fmt.Fprintf(dst, "Currency: %s\n", result.Currency)
+	fmt.Fprintf(dst, "Location: %s\n", result.Loc)
+	fmt.Fprintf(dst, "Timezone: %s\n", result.Timezone)
 }
 
-func PrintJSON(result Result) error {
+func PrintJSON(dst io.Writer, result Result) error {
 	out, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(out))
+	fmt.Fprintln(dst, string(out))
 	return nil
 }

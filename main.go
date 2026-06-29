@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"time"
@@ -17,8 +18,9 @@ const requestTimeout = 5 * time.Second
 
 func main() {
 	jsonFlag := flag.Bool("json", false, "output as JSON")
+	outFile := flag.String("o", "", "write output to a file instead of stdout")
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: %s [--json] <hostname>\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "usage: %s [--json] [-o file] <hostname>\n", os.Args[0])
 		flag.PrintDefaults()
 	}
 	flag.Parse()
@@ -49,12 +51,21 @@ func main() {
 	currency := geoip.CurrencyForCountry(info.Country)
 	result := output.Result{Info: info, Hostnames: hostnames, Currency: currency}
 
+	var dst io.Writer = os.Stdout
+	if *outFile != "" {
+		f, err := os.Create(*outFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer func() { _ = f.Close() }()
+		dst = f
+	}
 	if *jsonFlag {
-		if err := output.PrintJSON(result); err != nil {
+		if err := output.PrintJSON(dst, result); err != nil {
 			log.Fatal(err)
 		}
 	} else {
-		output.Print(result)
+		output.Print(dst, result)
 	}
 
 }
