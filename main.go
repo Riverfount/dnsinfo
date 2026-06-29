@@ -2,14 +2,13 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/Riverfount/dnsinfo/internal/dnsresolve"
 	"github.com/Riverfount/dnsinfo/internal/geoip"
+	"github.com/Riverfount/dnsinfo/internal/output"
 )
 
 const requestTimeout = 5 * time.Second
@@ -40,15 +39,7 @@ func main() {
 	hostnames := dnsresolve.ReverseHostname(ctx, ip4)
 	currency := geoip.CurrencyForCountry(info.Country)
 
-	fmt.Printf("IP: %s\n", info.IP)
-	fmt.Printf("Hostnames: %s\n", strings.Join(hostnames, ", "))
-	fmt.Printf("Organization: %s\n", info.Org)
-	fmt.Printf("Anycast: %t\n", info.Anycast)
-	fmt.Printf("City: %s\n", info.City)
-	fmt.Printf("Region: %s\n", info.Region)
-	fmt.Printf("Postal: %s\n", info.Postal)
-	fmt.Printf("Country: %s\n", info.Country)
-	fmt.Printf("Currency: %s\n", currency)
-	fmt.Printf("Location: %s\n", info.Loc)
-	fmt.Printf("Timezone: %s\n", info.Timezone)
+	result := output.Result{Info: info, Hostnames: hostnames, Currency: currency}
+
+	output.Print(result)
 }
