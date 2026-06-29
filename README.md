@@ -17,6 +17,8 @@ Given a hostname (e.g. `www.google.com`), `dnsinfo` reports:
 - **Location** — latitude and longitude
 - **Timezone** — the IANA timezone
 
+Output is available as human-readable text (default) or JSON, and can be written to the terminal or to a file.
+
 Geolocation and network data come from the [ipinfo.io](https://ipinfo.io) API; reverse hostnames are resolved locally using Go's standard library.
 
 > **Note on accuracy:** IP geolocation is approximate, especially for CDN, cloud, and anycast addresses. For example, Google's front-end IPs report "Mountain View" (the registration location), not where your packets actually land. Treat the geographic data as indicative, not exact.
@@ -26,35 +28,47 @@ Geolocation and network data come from the [ipinfo.io](https://ipinfo.io) API; r
 - Go 1.22 or later
 - No API key required — `dnsinfo` uses ipinfo.io's anonymous tier and resolves reverse hostnames locally.
 
-## Usage
-
-Clone and run directly:
+## Installation
 
 ```bash
 git clone https://github.com/Riverfount/dnsinfo.git
 cd dnsinfo
-go run . www.google.com
-```
-
-Or build a binary:
-
-```bash
 go build -o dnsinfo .
-./dnsinfo www.google.com
 ```
 
-The tool accepts a bare hostname, a hostname with a port, or a full URL — it extracts the host in all cases:
+Or run directly without building:
 
 ```bash
 go run . www.google.com
-go run . https://www.google.com/some/path
-go run . dns.google
+```
+
+## Usage
+
+```
+usage: dnsinfo [--json] [-o file] <hostname>
+  -json
+        output as JSON
+  -o string
+        write output to a file instead of stdout
+```
+
+The hostname can be a bare host, a host with a port, or a full URL — the host is extracted in all cases. Flags must come before the hostname.
+
+Examples:
+
+```bash
+dnsinfo www.google.com                    # text output to the terminal
+dnsinfo --json www.google.com             # JSON output to the terminal
+dnsinfo -o result.txt www.google.com      # text output to a file
+dnsinfo --json -o result.json dns.google  # JSON output to a file
 ```
 
 ## Example output
 
+Text (default):
+
 ```
-$ go run . dns.google
+$ dnsinfo dns.google
 IP: 8.8.8.8
 Hostnames: dns.google
 Organization: AS15169 Google LLC
@@ -68,16 +82,37 @@ Location: 37.4056,-122.0775
 Timezone: America/Los_Angeles
 ```
 
-Hosts whose IPs have no reverse DNS record simply show an empty `Hostnames` field.
+JSON (`--json`):
+
+```json
+{
+  "ip": "8.8.8.8",
+  "city": "Mountain View",
+  "region": "California",
+  "country": "US",
+  "loc": "37.4056,-122.0775",
+  "org": "AS15169 Google LLC",
+  "postal": "94043",
+  "timezone": "America/Los_Angeles",
+  "anycast": true,
+  "hostnames": [
+    "dns.google"
+  ],
+  "currency": "USD"
+}
+```
+
+Hosts whose IPs have no reverse DNS record show an empty `Hostnames` field (or an empty `hostnames` array in JSON).
 
 ## Project structure
 
 ```
 dnsinfo/
-├── main.go                     orchestration and output
+├── main.go                     flag parsing and orchestration
 └── internal/
     ├── dnsresolve/             hostname normalization and DNS resolution
-    └── geoip/                  ipinfo.io lookup and currency mapping
+    ├── geoip/                  ipinfo.io lookup and currency mapping
+    └── output/                 text and JSON formatting
 ```
 
 ## Tests
