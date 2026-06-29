@@ -2,16 +2,15 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"net"
-	"net/http"
 	"net/url"
 	"os"
 	"strings"
-	"time"
+
+	"github.com/Riverfount/dnsinfo/internal/geoip"
 )
 
 func normalizeHost(urlRaw string) (string, error) {
@@ -45,66 +44,6 @@ func firstIPv4(ipAddrs []net.IPAddr) (net.IP, error) {
 	return ip4, nil
 }
 
-type IPInfo struct {
-	IP       string `json:"ip"`
-	City     string `json:"city"`
-	Region   string `json:"region"`
-	Country  string `json:"country"`
-	Loc      string `json:"loc"`
-	Org      string `json:"org"`
-	Postal   string `json:"postal"`
-	Timezone string `json:"timezone"`
-	Anycast  bool   `json:"anycast"`
-}
-
-var currencyByCountry = map[string]string{
-	"US": "USD",
-	"BR": "BRL",
-	"GB": "GBP",
-	"CA": "CAD",
-	"AU": "AUD",
-	"NZ": "NZD",
-	"JP": "JPY",
-	"CN": "CNY",
-	"IN": "INR",
-	"MX": "MXN",
-	"AR": "ARS",
-	"CL": "CLP",
-	"CO": "COP",
-	"PE": "PEN",
-	"UY": "UYU",
-	"PY": "PYG",
-	"DE": "EUR",
-	"FR": "EUR",
-	"IT": "EUR",
-	"ES": "EUR",
-	"PT": "EUR",
-	"NL": "EUR",
-	"CH": "CHF",
-	"SE": "SEK",
-	"NO": "NOK",
-	"DK": "DKK",
-	"PL": "PLN",
-	"TR": "TRY",
-	"RU": "RUB",
-	"ZA": "ZAR",
-	"KR": "KRW",
-	"SG": "SGD",
-	"HK": "HKD",
-	"AE": "AED",
-	"SA": "SAR",
-	"IL": "ILS",
-	"TH": "THB",
-	"VN": "VND",
-	"ID": "IDR",
-	"PH": "PHP",
-}
-
-const (
-	requestTimeout = 5 * time.Second
-	ipInfoBaseURL  = "https://ipinfo.io/%s/json"
-)
-
 func main() {
 	if len(os.Args) < 2 {
 		log.Fatalf("usage: %s <hostname>", os.Args[0])
@@ -114,7 +53,7 @@ func main() {
 		log.Fatal(err)
 	}
 	resolver := &net.Resolver{}
-	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), geoip.RequestTimeout)
 	defer cancel()
 	ipAddrs, err := resolver.LookupIPAddr(ctx, host)
 	if err != nil {
@@ -124,13 +63,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	info, err := fetchIPInfo(ctx, ip4)
+	info, err := geoip.Fetch(ctx, ip4)
 	if err != nil {
 		log.Fatal(err)
 	}
 	hostnames := reverseHostname(ctx, resolver, ip4)
 
-	currency := currencyForCountry(info.Country)
+	currency := geoip.CurrencyForCountry(info.Country)
 
 	fmt.Printf("IP: %s\n", info.IP)
 	fmt.Printf("Hostnames: %s\n", strings.Join(hostnames, ", "))
@@ -143,36 +82,6 @@ func main() {
 	fmt.Printf("Currency: %s\n", currency)
 	fmt.Printf("Location: %s\n", info.Loc)
 	fmt.Printf("Timezone: %s\n", info.Timezone)
-}
-
-func currencyForCountry(country string) string {
-	currency, ok := currencyByCountry[country]
-	if !ok {
-		currency = "N/A"
-	}
-	return currency
-}
-
-func fetchIPInfo(ctx context.Context, ip4 net.IP) (IPInfo, error) {
-	urlAddr := fmt.Sprintf(ipInfoBaseURL, ip4.To4().String())
-	client := &http.Client{Timeout: requestTimeout}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlAddr, nil)
-	if err != nil {
-		return IPInfo{}, err
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return IPInfo{}, err
-	}
-	defer func() { _ = resp.Body.Close() }()
-	if resp.StatusCode != http.StatusOK {
-		return IPInfo{}, fmt.Errorf("request failed with status %s", resp.Status)
-	}
-	var info IPInfo
-	if err := json.NewDecoder(resp.Body).Decode(&info); err != nil {
-		return IPInfo{}, err
-	}
-	return info, nil
 }
 
 func reverseHostname(ctx context.Context, resolver *net.Resolver, ip net.IP) []string {
