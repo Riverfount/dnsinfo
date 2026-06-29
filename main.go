@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"flag"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -14,11 +16,18 @@ import (
 const requestTimeout = 5 * time.Second
 
 func main() {
-	if len(os.Args) < 2 {
-		log.Fatalf("usage: %s <hostname>", os.Args[0])
+	jsonFlag := flag.Bool("json", false, "output as JSON")
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "usage: %s [--json] <hostname>\n", os.Args[0])
+		flag.PrintDefaults()
 	}
-
-	host, err := dnsresolve.NormalizeHost(os.Args[1])
+	flag.Parse()
+	if flag.NArg() < 1 {
+		flag.Usage()
+		os.Exit(1)
+	}
+	hostname := flag.Arg(0)
+	host, err := dnsresolve.NormalizeHost(hostname)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,8 +47,14 @@ func main() {
 
 	hostnames := dnsresolve.ReverseHostname(ctx, ip4)
 	currency := geoip.CurrencyForCountry(info.Country)
-
 	result := output.Result{Info: info, Hostnames: hostnames, Currency: currency}
 
-	output.Print(result)
+	if *jsonFlag {
+		if err := output.PrintJSON(result); err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		output.Print(result)
+	}
+
 }

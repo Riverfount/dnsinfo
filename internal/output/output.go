@@ -1,6 +1,7 @@
 package output
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -25,4 +26,13 @@ func Print(result Result) {
 	fmt.Printf("Currency: %s\n", result.Currency)
 	fmt.Printf("Location: %s\n", result.Loc)
 	fmt.Printf("Timezone: %s\n", result.Timezone)
+}
+
+func PrintJSON(result Result) error {
+	out, err := json.MarshalIndent(result, "", "  ")
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(out))
+	return nil
 }
