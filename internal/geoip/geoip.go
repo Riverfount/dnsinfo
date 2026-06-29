@@ -65,7 +65,7 @@ var currencyByCountry = map[string]string{
 }
 
 const (
-	RequestTimeout = 5 * time.Second
+	requestTimeout = 5 * time.Second
 	ipInfoBaseURL  = "https://ipinfo.io/%s/json"
 )
 
@@ -79,7 +79,7 @@ func CurrencyForCountry(country string) string {
 
 func Fetch(ctx context.Context, ip4 net.IP) (Info, error) {
 	urlAddr := fmt.Sprintf(ipInfoBaseURL, ip4.To4().String())
-	client := &http.Client{Timeout: RequestTimeout}
+	client := &http.Client{Timeout: requestTimeout}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlAddr, nil)
 	if err != nil {
 		return Info{}, err
