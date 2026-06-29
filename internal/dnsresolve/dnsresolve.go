@@ -3,6 +3,7 @@ package dnsresolve
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"net/url"
 	"strings"
@@ -37,7 +38,8 @@ func FirstIPv4(ipAddrs []net.IPAddr) (net.IP, error) {
 	return ip4, nil
 }
 
-func ReverseHostname(ctx context.Context, resolver *net.Resolver, ip net.IP) []string {
+func ReverseHostname(ctx context.Context, ip net.IP) []string {
+	resolver := &net.Resolver{}
 	hostnames, err := resolver.LookupAddr(ctx, ip.To4().String())
 	if err != nil {
 		return nil
@@ -46,4 +48,19 @@ func ReverseHostname(ctx context.Context, resolver *net.Resolver, ip net.IP) []s
 		hostnames[i] = strings.TrimSuffix(hostnames[i], ".")
 	}
 	return hostnames
+}
+
+func ResolveIPv4(ctx context.Context, host string) (net.IP, error) {
+	resolver := &net.Resolver{}
+	ipAddrs, err := resolver.LookupIPAddr(ctx, host)
+	if err != nil {
+		return nil, fmt.Errorf("resolving %s: %w", host, err)
+	}
+
+	ip4, err := FirstIPv4(ipAddrs)
+	if err != nil {
+		return nil, fmt.Errorf("%s has no IPv4 address: %w", host, err)
+	}
+
+	return ip4, nil
 }
